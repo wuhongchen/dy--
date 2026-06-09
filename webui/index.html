@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DyD 智能下载分析系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;color:#1f2937}
+.header{background:linear-gradient(135deg,#fe2c55,#ff6b81);color:#fff;padding:18px;text-align:center;position:sticky;top:0;z-index:100}
+.header h1{font-size:20px;font-weight:700}
+.header p{font-size:12px;opacity:.9;margin-top:2px}
+.container{max-width:1200px;margin:0 auto;padding:16px}
+.tabs{display:flex;gap:6px;background:#fff;border-radius:12px;padding:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:#6b7280;border:none;background:none;transition:all .2s}
+.tab:hover{background:#fff0f3;color:#fe2c55}
+.tab.active{background:#fe2c55;color:#fff}
+.tab-content{display:none}.tab-content.active{display:block}
+.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card-title{font-size:15px;font-weight:600;margin-bottom:12px;color:#374151}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.stat-card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.stat-num{font-size:22px;font-weight:700;color:#fe2c55}
+.stat-label{font-size:11px;color:#6b7280;margin-top:3px}
+.btn{padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:#fe2c55;color:#fff}.btn-primary:hover{background:#e61e4d}
+.btn-outline{background:#fff;color:#fe2c55;border:1px solid #fecdd3}.btn-outline:hover{background:#fff0f3}
+.btn-success{background:#10b981;color:#fff}
+.btn-danger{background:#dc2626;color:#fff}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn:disabled{background:#d1d5db;color:#9ca3af;cursor:not-allowed}
+input,select,textarea{padding:7px 10px;border-radius:8px;border:1px solid #e5e7eb;font-size:13px;outline:none;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:#fe2c55}
+textarea{resize:vertical}
+.progress-bar{background:#e5e7eb;border-radius:8px;height:24px;overflow:hidden;position:relative}
+.progress-fill{background:#fe2c55;height:100%;border-radius:8px;transition:width .3s;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:500;min-width:40px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px;color:#6b7280;border-bottom:2px solid #e5e7eb;font-weight:600;font-size:12px}
+td{padding:7px 8px;border-bottom:1px solid #f3f4f6}
+tr:hover td{background:#f8fafc}
+.num{text-align:right;font-weight:600}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.tag-green{background:#d1fae5;color:#059669}.tag-red{background:#fee2e2;color:#dc2626}.tag-blue{background:#dbeafe;color:#2563eb}
+.empty{text-align:center;padding:40px;color:#9ca3af}
+.log-box{background:#1e293b;color:#94a3b8;border-radius:8px;padding:12px;font-family:Consolas,monospace;font-size:12px;max-height:200px;overflow-y:auto;white-space:pre-wrap}
+.result-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;max-height:500px;overflow-y:auto;white-space:pre-wrap;line-height:1.8;font-size:13px}
+.sub-tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:2px solid #f3f4f6;padding-bottom:8px}
+.sub-tab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;color:#6b7280;border:none;background:none;transition:all .2s}
+.sub-tab:hover{color:#fe2c55}
+.sub-tab.active{color:#fe2c55;border-bottom:2px solid #fe2c55;font-weight:600}
+.flex{display:flex;gap:8px;align-items:center}
+.flex-1{flex:1}
+.mt-8{margin-top:8px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}
+.summary-box{background:#f0f9ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;font-size:12px;margin-bottom:12px}
+.toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s}
+.toast.show{opacity:1}
+.qa-item{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:8px}
+.qa-question{font-weight:600;font-size:14px;margin-bottom:6px}
+.qa-answer{font-size:13px;line-height:1.8;white-space:pre-wrap;color:#374151}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🎵 DyD 智能下载分析系统</h1>
+  <p>视频下载 · 逐字稿提取 · 主播蒸馏 · AI 问答</p>
+</div>
+<div class="container">
+  <div class="tabs" id="tabs">
+    <button class="tab active" onclick="switchTab('download',this)">📥 下载管理</button>
+    <button class="tab" onclick="switchTab('transcript',this)">📝 逐字稿</button>
+    <button class="tab" onclick="switchTab('distill',this)">👤 主播蒸馏</button>
+    <button class="tab" onclick="switchTab('history',this)">📋 下载历史</button>
+    <button class="tab" onclick="switchTab('settings',this)">⚙️ 设置</button>
+  </div>
+
+  <!-- ===== Tab 1: 下载管理 ===== -->
+  <div class="tab-content active" id="tab-download">
+    <div class="card">
+      <div class="flex mb-12">
+        <div id="chrome-status" class="tag tag-red">🔴 Chrome 未运行</div>
+        <button class="btn btn-outline btn-sm" onclick="startChrome()">启动Chrome</button>
+        <button class="btn btn-outline btn-sm" onclick="checkChrome()">检测</button>
+      </div>
+      <div class="flex mb-12">
+        <select id="download-mode" style="width:120px;height:38px">
+          <option value="user">主页作品</option>
+          <option value="liked">我的喜欢</option>
+          <option value="collection">我的收藏</option>
+          <option value="video">单个作品</option>
+        </select>
+        <input type="text" id="download-url" placeholder="粘贴抖音链接（主页/视频/短链接）..." class="flex-1" style="height:38px">
+        <button class="btn btn-primary" onclick="startDownload()" style="height:38px;padding:0 22px">📥 开始下载</button>
+      </div>
+      <div id="download-progress" style="display:none">
+        <div class="progress-bar"><div class="progress-fill" id="dl-fill" style="width:0%">0%</div></div>
+        <div class="log-box mt-8" id="dl-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tab 2: 逐字稿 ===== -->
+  <div class="tab-content" id="tab-transcript">
+    <div class="card">
+      <div class="card-title">📝 逐字稿提取</div>
+      <div class="flex mb-12">
+        <select id="transcript-select" style="width:400px;height:38px">
+          <option value="">选择已下载的视频...</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="refreshTranscriptList()">刷新</button>
+        <button class="btn btn-primary" onclick="startTranscript()">▶ 开始提取</button>
+      </div>
+      <div id="transcript-progress" style="display:none">
+        <div class="progress-bar"><div class="progress-fill" id="tr-fill" style="width:0%">0%</div></div>
+        <div class="log-box mt-8" id="tr-log"></div>
+      </div>
+      <div class="result-box" id="transcript-result" style="min-height:150px">选择视频并点击「开始提取」...</div>
+    </div>
+  </div>
+
+  <!-- ===== Tab 3: 主播蒸馏 ===== -->
+  <div class="tab-content" id="tab-distill">
+    <div class="grid-2">
+      <!-- 左侧：操作区 -->
+      <div>
+        <div class="card">
+          <div class="card-title">👤 选择主播</div>
+          <div class="flex mb-12">
+            <select id="distill-author" style="width:100%;height:38px" onchange="onAuthorChange()">
+              <option value="">选择主播...</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="refreshAuthorList()">刷新</button>
+          </div>
+          <div id="distill-summary" class="summary-box" style="display:none"></div>
+          <div class="mb-8" style="font-size:12px;color:#6b7280">
+            <label style="margin-right:12px"><input type="radio" name="distill-output" value="both" checked> 分析报告 + 知识库</label>
+            <label style="margin-right:12px"><input type="radio" name="distill-output" value="report"> 仅分析报告</label>
+            <label><input type="radio" name="distill-output" value="knowledge"> 仅知识库</label>
+          </div>
+          <button class="btn btn-primary" onclick="startDistill()" id="btn-distill" style="width:100%;height:42px;font-size:15px">🚀 开始蒸馏</button>
+          <div id="distill-progress" style="display:none" class="mt-8">
+            <div class="progress-bar"><div class="progress-fill" id="ds-fill" style="width:0%">0%</div></div>
+            <div class="log-box mt-8" id="ds-log"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📝 提示词</div>
+          <textarea id="distill-prompt" rows="6" style="width:100%;font-family:Consolas,monospace;font-size:12px"></textarea>
+          <div class="flex mt-8">
+            <button class="btn btn-outline btn-sm" onclick="saveDistillPrompt()">💾 保存</button>
+            <button class="btn btn-outline btn-sm" onclick="resetDistillPrompt()">🔄 重置</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：结果展示 -->
+      <div>
+        <div class="card">
+          <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab('reports',this)">📊 分析报告</button>
+            <button class="sub-tab" onclick="switchSubTab('knowledge',this)">📚 知识库</button>
+            <button class="sub-tab" onclick="switchSubTab('qa',this)">🤖 AI 问答</button>
+          </div>
+
+          <!-- 子Tab: 分析报告 -->
+          <div id="subtab-reports">
+            <div id="report-tabs" class="flex" style="flex-wrap:wrap;gap:4px;margin-bottom:10px"></div>
+            <div class="result-box" id="report-content" style="min-height:200px">选择主播并完成蒸馏后查看报告...</div>
+          </div>
+
+          <!-- 子Tab: 知识库 -->
+          <div id="subtab-knowledge" style="display:none">
+            <div class="flex mb-8">
+              <span style="font-size:12px;color:#6b7280">知识库包含: 分析报告 + 元数据 + 逐字稿</span>
+              <button class="btn btn-outline btn-sm" onclick="downloadKnowledge()">💾 下载</button>
+            </div>
+            <div class="result-box" id="knowledge-content" style="min-height:300px">完成蒸馏后查看知识库...</div>
+          </div>
+
+          <!-- 子Tab: AI问答 -->
+          <div id="subtab-qa" style="display:none">
+            <div class="flex mb-8">
+              <input type="text" id="qa-input" placeholder="基于知识库提问..." class="flex-1" onkeydown="if(event.key==='Enter')askQuestion()">
+              <button class="btn btn-primary btn-sm" onclick="askQuestion()">发送</button>
+            </div>
+            <div class="flex mb-8" style="flex-wrap:wrap">
+              <button class="btn btn-outline btn-sm" onclick="quickAsk('分析这个主播的内容策略和定位')">内容策略</button>
+              <button class="btn btn-outline btn-sm" onclick="quickAsk('哪些视频是爆款，为什么')">爆款分析</button>
+              <button class="btn btn-outline btn-sm" onclick="quickAsk('标题和封面的设计技巧')">标题优化</button>
+              <button class="btn btn-outline btn-sm" onclick="quickAsk('最佳发布时间和频率')">发布建议</button>
+            </div>
+            <div id="qa-history" style="max-height:400px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tab 4: 下载历史 ===== -->
+  <div class="tab-content" id="tab-history">
+    <div class="card">
+      <div class="card-title">📋 下载历史</div>
+      <div class="flex mb-12" style="flex-wrap:wrap;gap:8px">
+        <input type="text" id="history-search" placeholder="搜索标题..." style="width:200px;height:36px" onkeydown="if(event.key==='Enter')loadHistory()">
+        <select id="history-author" style="width:150px;height:36px" onchange="loadHistory()">
+          <option value="">全部作者</option>
+        </select>
+        <select id="history-transcript" style="width:120px;height:36px" onchange="loadHistory()">
+          <option value="">逐字稿: 全部</option>
+          <option value="yes">有逐字稿</option>
+          <option value="no">无逐字稿</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="loadHistory()">🔍 搜索</button>
+        <button class="btn btn-outline btn-sm" onclick="clearHistoryFilter()">清除</button>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>标题</th><th>作者</th><th>点赞</th><th>评论</th><th>分享</th><th>发布时间</th><th>逐字稿</th><th>操作</th></tr></thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== Tab 5: 设置 ===== -->
+  <div class="tab-content" id="tab-settings">
+    <div class="card">
+      <div class="card-title">🤖 LLM 配置</div>
+      <div class="mb-12">
+        <label style="font-size:12px;display:block;margin-bottom:4px">API 地址 (OpenAI兼容接口):</label>
+        <input type="text" id="cfg-api-base" style="width:100%" placeholder="https://api.openai.com/v1">
+      </div>
+      <div class="grid-2 mb-12">
+        <div><label style="font-size:12px;display:block;margin-bottom:4px">API Key:</label><input type="password" id="cfg-api-key" style="width:100%"></div>
+        <div><label style="font-size:12px;display:block;margin-bottom:4px">模型名称:</label><input type="text" id="cfg-model" style="width:100%" placeholder="gpt-4o / qwen-plus / ..."></div>
+      </div>
+      <div class="grid-2 mb-12">
+        <div><label style="font-size:12px;display:block;margin-bottom:4px">温度 (0-2):</label><input type="number" id="cfg-temp" min="0" max="20" value="7" style="width:100%"></div>
+        <div><label style="font-size:12px;display:block;margin-bottom:4px">最大Token:</label><input type="number" id="cfg-max-tokens" value="4096" style="width:100%"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎤 Whisper 配置</div>
+      <div class="grid-3 mb-12">
+        <div><label style="font-size:12px;display:block;margin-bottom:4px">模型:</label><select id="cfg-whisper-model" style="width:100%"><option>tiny</option><option selected>base</option><option>small</option><option>medium</option><option>large</option></select></div>
+        <div><label style="font-size:12px;display:block;margin-bottom:4px">设备:</label><select id="cfg-whisper-device" style="width:100%"><option selected>cpu</option><option>cuda</option></select></div>
+        <div><label style="font-size:12px;display:block;margin-bottom:4px">语言:</label><select id="cfg-whisper-lang" style="width:100%"><option selected>zh</option><option>en</option><option>auto</option></select></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveAllSettings()" style="width:100%;height:40px">💾 保存所有设置</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==== 全局 ====
+let currentDistillAuthor = '';
+let dsPollTimer = null;
+let trPollTimer = null;
+let dlPollTimer = null;
+
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+async function api(url,opts){const r=await fetch(url,opts);return r.json()}
+
+// ==== Tab 切换 ====
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='transcript')refreshTranscriptList();
+  if(name==='distill'){refreshAuthorList();loadDistillPrompt();}
+  if(name==='history'){refreshHistoryAuthorFilter();loadHistory();}
+  if(name==='settings')loadSettings();
+}
+function switchSubTab(name,btn){
+  ['reports','knowledge','qa'].forEach(n=>{document.getElementById('subtab-'+n).style.display=n===name?'block':'none'});
+  document.querySelectorAll('.sub-tab').forEach(e=>e.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(name==='reports'&&currentDistillAuthor)loadReports();
+  if(name==='knowledge'&&currentDistillAuthor)loadKnowledge();
+}
+
+// ==== Chrome ====
+async function checkChrome(){const d=await api('/api/chrome/status');const el=document.getElementById('chrome-status');el.className=d.running?'tag tag-green':'tag tag-red';el.textContent=d.running?'🟢 Chrome 已运行':'🔴 Chrome 未运行'}
+async function startChrome(){showToast('启动Chrome...');const d=await api('/api/chrome/start',{method:'POST'});showToast(d.success?'已启动':'失败');checkChrome()}
+setInterval(checkChrome,5000);
+
+// ==== 下载 ====
+async function startDownload(){
+  let url=document.getElementById('download-url').value.trim();
+  const mode=document.getElementById('download-mode').value;
+  if(mode!=='liked'&&mode!=='collection'&&!url){showToast('请输入链接');return}
+  // 智能提取链接
+  const vidMatch=url.match(/video\/(\d+)/);
+  const userMatch=url.match(/user\/([^\s?]+)/);
+  const shortMatch=url.match(/(https?:\/\/v\.douyin\.com\/[^\s]+)/);
+  if(vidMatch)url='https://www.douyin.com/video/'+vidMatch[1];
+  else if(userMatch)url='https://www.douyin.com/user/'+userMatch[1];
+  else if(shortMatch)url=shortMatch[1];
+  const d=await api('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,url})});
+  if(d.task_id){document.getElementById('download-progress').style.display='block';document.getElementById('dl-log').textContent='任务已启动...\n';pollTask(d.task_id,'dl')}
+}
+function pollTask(id,prefix){
+  const fill=document.getElementById(prefix+'-fill'),log=document.getElementById(prefix+'-log');
+  const timer=setInterval(async()=>{
+    const d=await api('/api/task/'+id);
+    fill.style.width=d.progress+'%';fill.textContent=d.progress+'%';
+    if(d.step){log.textContent+=d.step+'\n';log.scrollTop=99999}
+    if(d.status==='completed'||d.status==='failed'){clearInterval(timer);fill.style.background=d.status==='completed'?'#10b981':'#dc2626';showToast(d.step)}
+  },2000);
+}
+
+// ==== 逐字稿 ====
+async function refreshTranscriptList(){
+  const list=await api('/api/downloads');
+  const trList=await api('/api/transcripts');
+  const trIds=new Set(trList.map(t=>t.aweme_id));
+  const sel=document.getElementById('transcript-select');
+  sel.innerHTML='<option value="">选择已下载的视频...</option>';
+  list.forEach(d=>{sel.innerHTML+=`<option value="${d.aweme_id}">${trIds.has(d.aweme_id)?'✅':'⏳'} ${(d.title||'').substring(0,40)} - ${d.author||''}</option>`});
+}
+async function loadTranscript(){
+  const id=document.getElementById('transcript-select').value;
+  if(!id)return;
+  try{const d=await api('/api/transcript/'+id);document.getElementById('transcript-result').textContent=d.text_content||'无内容'}
+  catch{document.getElementById('transcript-result').textContent='暂无逐字稿，请先提取'}
+}
+async function startTranscript(){
+  const id=document.getElementById('transcript-select').value;
+  if(!id){showToast('请先选择视频');return}
+  const d=await api('/api/transcript',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({aweme_id:id})});
+  if(d.task_id){document.getElementById('transcript-progress').style.display='block';document.getElementById('tr-log').textContent='开始...\n';
+    if(trPollTimer)clearInterval(trPollTimer);
+    trPollTimer=setInterval(async()=>{const t=await api('/api/task/'+d.task_id);document.getElementById('tr-fill').style.width=t.progress+'%';document.getElementById('tr-fill').textContent=t.progress+'%';if(t.step){document.getElementById('tr-log').textContent+=t.step+'\n';document.getElementById('tr-log').scrollTop=99999}if(t.status==='completed'||t.status==='failed'){clearInterval(trPollTimer);document.getElementById('tr-fill').style.background=t.status==='completed'?'#10b981':'#dc2626';showToast(t.step);if(t.status==='completed')loadTranscript();refreshTranscriptList()}},2000);
+  }
+}
+
+// ==== 主播蒸馏 ====
+async function refreshAuthorList(){
+  const list=await api('/api/downloads');
+  const trList=await api('/api/transcripts');
+  const trMap={};trList.forEach(t=>{trMap[t.aweme_id]=t});
+  const authors={};
+  list.forEach(d=>{if(!d.author)return;if(!authors[d.author])authors[d.author]={count:0,withTr:0};authors[d.author].count++;if(trMap[d.aweme_id])authors[d.author].withTr++});
+  const sel=document.getElementById('distill-author');
+  sel.innerHTML='<option value="">选择主播...</option>';
+  Object.entries(authors).forEach(([a,i])=>{sel.innerHTML+=`<option value="${a}">👤 ${a} (${i.count}个视频, ${i.withTr}条逐字稿)</option>`});
+  if(currentDistillAuthor)sel.value=currentDistillAuthor;
+}
+function onAuthorChange(){
+  const author=document.getElementById('distill-author').value;
+  currentDistillAuthor=author;
+  if(!author){document.getElementById('distill-summary').style.display='none';return}
+  // 查摘要
+  api('/api/downloads?author='+encodeURIComponent(author)).then(list=>{
+    api('/api/transcripts').then(trList=>{
+      const trIds=new Set(trList.map(t=>t.aweme_id));
+      const total=list.length;
+      const withTr=list.filter(d=>trIds.has(d.aweme_id)).length;
+      const totalLikes=list.reduce((s,d)=>s+(d.digg_count||0),0);
+      const el=document.getElementById('distill-summary');
+      el.style.display='block';
+      el.innerHTML=`📊 <b>${author}</b>: ${total}个视频 | ${withTr}/${total}条逐字稿 | 总点赞 ${totalLikes.toLocaleString()}`+(withTr<total?` | <span style="color:#dc2626">⚠️ ${total-withTr}个缺逐字稿，蒸馏时自动提取</span>`:` | <span style="color:#059669">✅ 逐字稿齐全</span>`);
+    });
+  });
+  // 检查是否已完成过分身
+  api('/api/distill/'+author+'/reports').then(d=>{
+    if(d.reports&&d.reports.length>0){
+      document.getElementById('btn-distill').textContent='🔄 重新蒸馏';
+      loadReports();
+    }else{
+      document.getElementById('btn-distill').textContent='🚀 开始蒸馏';
+    }
+  });
+}
+async function startDistill(){
+  const author=document.getElementById('distill-author').value;
+  if(!author){showToast('请先选择主播');return}
+  const prompt=document.getElementById('distill-prompt').value;
+  const output=document.querySelector('input[name="distill-output"]:checked').value;
+  document.getElementById('distill-progress').style.display='block';
+  document.getElementById('ds-log').textContent='启动蒸馏...\n';
+  document.getElementById('ds-fill').style.width='0%';
+  const d=await api('/api/distill?author='+encodeURIComponent(author)+'&prompt='+encodeURIComponent(prompt)+'&output='+output,{method:'POST'});
+  if(d.task_id){
+    if(dsPollTimer)clearInterval(dsPollTimer);
+    dsPollTimer=setInterval(async()=>{
+      const t=await api('/api/distill/'+author+'/status');
+      document.getElementById('ds-fill').style.width=(t.progress||0)+'%';
+      document.getElementById('ds-fill').textContent=(t.progress||0)+'%';
+      if(t.step){document.getElementById('ds-log').textContent+=t.step+'\n';document.getElementById('ds-log').scrollTop=99999}
+      if(t.status==='completed'||t.status==='failed'){clearInterval(dsPollTimer);dsPollTimer=null;document.getElementById('ds-fill').style.background=t.status==='completed'?'#10b981':'#dc2626';showToast(t.step);if(t.status==='completed'){loadReports();loadKnowledge()}}
+    },2000);
+  }
+}
+async function loadReports(){
+  if(!currentDistillAuthor)return;
+  const d=await api('/api/distill/'+currentDistillAuthor+'/reports');
+  const el=document.getElementById('report-tabs');
+  el.innerHTML='';
+  if(!d.reports||d.reports.length===0){document.getElementById('report-content').textContent='暂无报告，请先完成分身';return}
+  d.reports.forEach((r,i)=>{
+    const btn=document.createElement('button');btn.className='sub-tab'+(i===0?' active':'');btn.textContent=r.split('_')[1]||r;
+    btn.onclick=()=>{document.querySelectorAll('#report-tabs .sub-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadReportContent(r)};
+    el.appendChild(btn);
+  });
+  loadReportContent(d.reports[0]);
+}
+async function loadReportContent(name){
+  const d=await api('/api/distill/'+currentDistillAuthor+'/report/'+encodeURIComponent(name));
+  document.getElementById('report-content').textContent=d.content||'无内容';
+}
+async function loadKnowledge(){
+  if(!currentDistillAuthor)return;
+  try{const d=await api('/api/distill/'+currentDistillAuthor+'/knowledge');document.getElementById('knowledge-content').textContent=d.content||'无内容'}
+  catch{document.getElementById('knowledge-content').textContent='知识库不存在，请先完成分身'}
+}
+function downloadKnowledge(){
+  const text=document.getElementById('knowledge-content').textContent;
+  if(!text||text.includes('不存在')){showToast('没有内容');return}
+  const b=new Blob([text],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=currentDistillAuthor+'_知识库.md';a.click();
+}
+async function askQuestion(){
+  const input=document.getElementById('qa-input');
+  const q=input.value.trim();if(!q)return;input.value='';
+  const el=document.getElementById('qa-history');
+  el.innerHTML+=`<div class="qa-item"><div class="qa-question">Q: ${q}</div><div class="qa-answer" id="qa-ans-${Date.now()}">思考中...</div></div>`;
+  el.scrollTop=99999;
+  try{const d=await api('/api/distill/'+currentDistillAuthor+'/qa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
+    el.lastElementChild.querySelector('.qa-answer').textContent=d.answer||'无回答';
+  }catch(e){el.lastElementChild.querySelector('.qa-answer').textContent='错误: '+e.message}
+  el.scrollTop=99999;
+}
+function quickAsk(q){document.getElementById('qa-input').value=q;askQuestion()}
+
+// ==== 下载历史 ====
+async function refreshHistoryAuthorFilter(){
+  const authors=await api('/api/authors');
+  const sel=document.getElementById('history-author');
+  sel.innerHTML='<option value="">全部作者</option>';
+  authors.forEach(a=>{sel.innerHTML+=`<option value="${a.name}">${a.name} (${a.count})</option>`});
+}
+async function loadHistory(){
+  const kw=document.getElementById('history-search').value;
+  const author=document.getElementById('history-author').value;
+  const trFilter=document.getElementById('history-transcript').value;
+  let list=await api('/api/downloads?keyword='+encodeURIComponent(kw));
+  // 按作者筛选
+  if(author)list=list.filter(d=>d.author===author);
+  // 获取逐字稿状态
+  const trList=await api('/api/transcripts');
+  const trIds=new Set(trList.map(t=>t.aweme_id));
+  // 按逐字稿状态筛选
+  if(trFilter==='yes')list=list.filter(d=>trIds.has(d.aweme_id));
+  if(trFilter==='no')list=list.filter(d=>!trIds.has(d.aweme_id));
+  const tbody=document.getElementById('history-tbody');
+  if(list.length===0){tbody.innerHTML='<tr><td colspan="8" class="empty">暂无数据</td></tr>';return}
+  tbody.innerHTML=list.map((d,i)=>{
+    const ts=d.create_time||0;
+    const date=ts?new Date(ts*1000).toLocaleDateString('zh-CN'):'-';
+    return `<tr>
+    <td>${i+1}</td><td>${(d.title||'').substring(0,50)}</td><td>${d.author||''}</td>
+    <td class="num">${d.digg_count||0}</td><td class="num">${d.comment_count||0}</td><td class="num">${d.share_count||0}</td>
+    <td>${date}</td>
+    <td>${trIds.has(d.aweme_id)?'<span class="tag tag-green">✅</span>':'<span class="tag tag-red">❌</span>'}</td>
+    <td><button class="btn btn-outline btn-sm" onclick="goDistill('${d.author}')">👤</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteHistory('${d.aweme_id}')">🗑</button></td>
+  </tr>`}).join('');
+}
+function goDistill(author){switchTab('distill',document.querySelectorAll('.tab')[2]);document.getElementById('distill-author').value=author;onAuthorChange()}
+function clearHistoryFilter(){document.getElementById('history-search').value='';document.getElementById('history-author').value='';document.getElementById('history-transcript').value='';loadHistory()}
+async function deleteHistory(id){if(!confirm('确定删除?'))return;await api('/api/downloads/'+id,{method:'DELETE'});loadHistory();showToast('已删除')}
+
+// ==== 设置 ====
+async function loadSettings(){
+  const cfg=await api('/api/config/llm');
+  document.getElementById('cfg-api-base').value=cfg.llm_api_base||'';
+  document.getElementById('cfg-api-key').value=cfg.llm_api_key||'';
+  document.getElementById('cfg-model').value=cfg.llm_model||'';
+  document.getElementById('cfg-temp').value=Math.round((cfg.llm_temperature||0.7)*10);
+  document.getElementById('cfg-max-tokens').value=cfg.llm_max_tokens||4096;
+  document.getElementById('cfg-whisper-model').value=cfg.whisper_model||'base';
+  document.getElementById('cfg-whisper-device').value=cfg.whisper_device||'cpu';
+  document.getElementById('cfg-whisper-lang').value=cfg.whisper_language||'zh';
+}
+async function saveAllSettings(){
+  await api('/api/config/llm',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    llm_provider:'openai',llm_api_base:document.getElementById('cfg-api-base').value,
+    llm_api_key:document.getElementById('cfg-api-key').value,llm_model:document.getElementById('cfg-model').value,
+    llm_temperature:document.getElementById('cfg-temp').value/10,llm_max_tokens:parseInt(document.getElementById('cfg-max-tokens').value),
+    whisper_model:document.getElementById('cfg-whisper-model').value,whisper_device:document.getElementById('cfg-whisper-device').value,
+    whisper_compute:'int8',whisper_language:document.getElementById('cfg-whisper-lang').value,
+  })});showToast('设置已保存 ✓')}
+
+// ==== 提示词 ====
+async function loadDistillPrompt(){const d=await api('/api/prompts/analyze_anchor');document.getElementById('distill-prompt').value=d.content||''}
+async function saveDistillPrompt(){await api('/api/prompts/analyze_anchor',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'analyze_anchor',content:document.getElementById('distill-prompt').value})});showToast('提示词已保存')}
+async function resetDistillPrompt(){const d=await api('/api/prompts/analyze_anchor/reset',{method:'POST'});document.getElementById('distill-prompt').value=d.content||'';showToast('已重置')}
+
+// ==== 初始化 ====
+checkChrome();
+loadDistillPrompt();
+</script>
+</body>
+</html>

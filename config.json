@@ -1,0 +1,10 @@
+{
+  "saveDir": "",
+  "downloadVideo": true,
+  "downloadCover": true,
+  "downloadInfo": true,
+  "concurrency": 1,
+  "retryCount": 3,
+  "windowWidth": 1200,
+  "windowHeight": 800
+}

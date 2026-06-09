@@ -1,0 +1,8 @@
+playwright
+requests
+websocket-client
+httpx
+fastapi
+uvicorn
+python-multipart
+pydantic
