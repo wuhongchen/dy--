@@ -1,0 +1,8 @@
+{
+  "saveDir": "~/Downloads/DyD",
+  "downloadVideo": true,
+  "downloadCover": true,
+  "downloadInfo": true,
+  "concurrency": 1,
+  "retryCount": 3
+}

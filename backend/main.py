@@ -67,6 +67,9 @@ def load_config():
             for k, v in default.items():
                 if k not in cfg:
                     cfg[k] = v
+            # 如果 saveDir 为空，使用默认值
+            if not cfg.get('saveDir'):
+                cfg['saveDir'] = default['saveDir']
             return cfg
         except:
             pass

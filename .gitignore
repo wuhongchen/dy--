@@ -15,9 +15,9 @@ env/
 # 数据目录（用户数据，不上传）
 data/
 
-# 授权和试用文件
-.license
-.trial
+# 用户配置文件（包含 API Key 等敏感信息）
+config.json
+llm_config.json
 
 # IDE
 .vscode/
@@ -32,3 +32,6 @@ desktop.ini
 
 # 日志
 *.log
+
+# Chrome 数据
+ChromeProfile/

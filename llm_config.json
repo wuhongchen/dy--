@@ -6,7 +6,7 @@
   "llm_temperature": 0.7,
   "llm_max_tokens": 4096,
   "whisper_model": "medium",
-  "whisper_device": "cpu",
+  "whisper_device": "cuda",
   "whisper_compute": "int8",
   "whisper_language": "zh"
 }

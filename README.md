@@ -4,7 +4,9 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110-green)
-![License](https://img.shields.io/badge/License-Proprietary-red)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+> ⚠️ **法律声明**：本软件仅供学习交流和研究用途，严禁用于商业目的或侵犯他人权益。使用前请仔细阅读[免责声明](#-免责声明)。
 
 ---
 
@@ -54,33 +56,31 @@ python -m backend.main
 
 ---
 
-## 🔑 授权说明
+## ⚙️ 配置
 
-| 状态 | 功能限制 |
-|------|---------|
-| ✅ 已授权 | 全功能可用，永久有效 |
-| ⏳ 试用中 | 首次启动后 24 小时内全功能可用 |
-| ❌ 未授权 | 所有功能锁定 |
+### 配置文件
 
-**授权码：`DYD-VIP-2024`**
+首次运行会自动生成配置文件。你也可以手动复制示例配置：
 
-在页面顶部输入授权码，点击"激活"即可。
+```bash
+# 复制配置模板
+cp config.example.json config.json
+cp llm_config.example.json llm_config.json
+```
 
----
+### LLM 配置
 
-## ⚙️ LLM 配置
+编辑 `llm_config.json` 或在 Web 界面中配置：
 
-首次使用需要配置 LLM（大语言模型）接口：
+```json
+{
+  "llm_api_base": "https://api.openai.com/v1",
+  "llm_api_key": "your-api-key",
+  "llm_model": "gpt-4o"
+}
+```
 
-1. 打开 http://localhost:8080
-2. 切换到「设置」Tab
-3. 填写 API 配置：
-   - **API 地址**：你的 OpenAI 兼容接口地址（如 `https://api.openai.com/v1`）
-   - **API Key**：你的 API 密钥
-   - **模型名称**：如 `gpt-4o`、`qwen-plus` 等
-4. 点击保存
-
-支持任何 OpenAI 兼容的 API 接口。
+支持任何 OpenAI 兼容的 API 接口（OpenAI、DeepSeek、Qwen 等）。
 
 ---
 
@@ -128,9 +128,6 @@ DyD下载器/
 │       └── transcript.py     # Whisper 语音识别
 ├── webui/
 │   └── index.html            # 前端页面
-├── app/
-│   ├── auth.py               # 授权验证
-│   └── gen_license.py        # 授权码生成（作者用）
 ├── prompts/                  # LLM 提示词模板
 │   ├── analyze_video.txt     # 单视频分析
 │   ├── analyze_anchor.txt    # 主播蒸馏分析
@@ -139,8 +136,8 @@ DyD下载器/
 ├── dyd_analysis.py           # AI 分析引擎
 ├── dyd_download.py           # 下载器核心（命令行版）
 ├── dyd_gui.py                # PyQt5 GUI（备用）
-├── config.json               # 下载配置
-├── llm_config.json           # LLM 配置
+├── config.example.json       # 下载配置模板
+├── llm_config.example.json   # LLM 配置模板
 └── data/                     # 数据存储（下载视频/逐字稿/报告）
 ```
 
@@ -164,8 +161,6 @@ DyD下载器/
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/auth/status` | 授权状态 |
-| POST | `/api/auth/activate` | 激活授权码 |
 | POST | `/api/download` | 开始下载 |
 | GET | `/api/task/{id}` | 任务进度 |
 | GET | `/api/downloads` | 下载历史 |
@@ -197,12 +192,48 @@ A: 程序会自动尝试多个 CDN 节点，如果都慢可能是网络问题。
 
 ## ⚖️ 免责声明
 
-1. 本软件仅供学习交流和研究用途，**不得用于商业目的**。
-2. 本软件不提供任何形式的担保，使用风险由用户自行承担。
-3. 用户应遵守所在地区的法律法规，合理使用本软件。
-4. 本软件开发者不对用户使用本软件所产生的任何后果承担责任。
-5. 本软件不存储、不传播任何用户数据，所有数据均保存在用户本地。
-6. 下载的内容版权归原作者所有，请尊重知识产权，仅用于个人学习和研究。
+**本软件仅供学习交流和研究用途，使用前请仔细阅读以下条款：**
+
+### 1. 用途限制
+- 本软件仅限用于**个人学习、研究、数据分析**等合法用途
+- **严禁**用于任何商业目的、大规模爬取、侵犯他人权益等违法行为
+- 用户不得利用本软件从事违反《中华人民共和国网络安全法》《中华人民共和国著作权法》等法律法规的行为
+
+### 2. 用户责任
+- 用户应自行判断使用本软件的合法性，并承担相应的法律责任
+- 用户应遵守抖音平台的服务条款和社区规范
+- 用户下载的内容版权归原作者/平台所有，请尊重知识产权
+
+### 3. 技术说明
+- 本软件通过浏览器自动化技术获取公开数据，**不破解、不绕过**任何技术保护措施
+- 本软件**不存储、不传输、不分享**任何用户数据，所有数据仅保存在用户本地
+- 本软件**不获取**用户的账号密码、Cookie 等敏感信息
+
+### 4. 责任限制
+- 本软件按"现状"提供，不提供任何形式的明示或暗示担保
+- 开发者不对因使用本软件而产生的任何直接、间接、偶然、特殊损害承担责任
+- 因用户违规使用导致的任何法律后果，由用户自行承担
+
+### 5. 合规建议
+- 下载前请确认已获得内容创作者的授权或属于合理使用范围
+- 请勿批量下载他人作品用于二次创作或商业用途
+- 如需商业使用，请联系原作者获取授权
+
+**使用本软件即表示您已阅读并同意上述条款。**
+
+---
+
+## 💬 联系方式
+
+如有问题或建议，欢迎扫码联系：
+
+<p align="center">
+  <img src="联系我.png" alt="联系我" width="200">
+</p>
+
+<p align="center">
+  <img src="请我抽包华子.jpg" alt="请我抽包华子" width="200">
+</p>
 
 ---
 
