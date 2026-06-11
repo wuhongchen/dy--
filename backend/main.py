@@ -117,9 +117,12 @@ def is_chrome_running():
 
 def find_chrome_exe():
     candidates = [
+        # Windows
         os.path.join(os.environ.get('PROGRAMFILES', ''), 'Google', 'Chrome', 'Application', 'chrome.exe'),
         os.path.join(os.environ.get('PROGRAMFILES(X86)', ''), 'Google', 'Chrome', 'Application', 'chrome.exe'),
         os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Google', 'Chrome', 'Application', 'chrome.exe'),
+        # macOS
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     ]
     for p in candidates:
         if os.path.exists(p):
@@ -133,7 +136,11 @@ def start_chrome():
     if not chrome_exe:
         return False
     import subprocess
-    user_data = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'DyD_Chrome')
+    # 根据平台选择用户数据目录
+    if sys.platform == 'darwin':
+        user_data = os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', 'DyD_Chrome')
+    else:
+        user_data = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'DyD_Chrome')
     os.makedirs(user_data, exist_ok=True)
     subprocess.Popen([
         chrome_exe, f'--remote-debugging-port={CHROME_PORT}',
@@ -552,6 +559,39 @@ def del_download(aweme_id: str):
     delete_download(aweme_id)
     return {"ok": True}
 
+
+@app.get("/api/video/{aweme_id}")
+def serve_video(aweme_id: str):
+    """在线播放已下载的视频"""
+    download = get_download_by_aweme_id(aweme_id)
+    if not download or not download.get('video_path'):
+        raise HTTPException(404, "视频文件不存在")
+    video_path = download['video_path']
+    if not os.path.exists(video_path):
+        raise HTTPException(404, "文件已被删除")
+    return FileResponse(video_path, media_type='video/mp4')
+
+
+@app.post("/api/downloads/{aweme_id}/open-folder")
+def open_download_folder(aweme_id: str):
+    """在文件管理器中打开视频所在文件夹"""
+    download = get_download_by_aweme_id(aweme_id)
+    if not download or not download.get('video_path'):
+        raise HTTPException(404, "视频文件不存在")
+    video_path = download['video_path']
+    folder = os.path.dirname(video_path)
+    if not os.path.exists(folder):
+        raise HTTPException(404, "文件夹不存在")
+    import subprocess, sys
+    if sys.platform == 'darwin':
+        subprocess.Popen(['open', '-R', video_path])
+    elif sys.platform == 'win32':
+        subprocess.Popen(['explorer', '/select,', video_path])
+    else:
+        subprocess.Popen(['xdg-open', folder])
+    return {"ok": True, "folder": folder}
+
+
 # ---- 逐字稿 ----
 @app.post("/api/transcript")
 def start_transcript(req: TranscriptRequest):
@@ -632,6 +672,108 @@ def list_transcripts():
             'created_at': str(item.get('created_at', '')),
         })
     return result
+
+# ---- 批量逐字稿提取 ----
+@app.post("/api/transcripts/batch")
+def start_batch_transcript(author: str = None):
+    """批量提取某作者所有视频的逐字稿"""
+    downloads = get_downloads()
+    if author:
+        videos = [d for d in downloads if d.get('author', '') == author]
+    else:
+        videos = downloads
+    if not videos:
+        raise HTTPException(400, "没有找到视频")
+
+    task_id = f"bt_{uuid.uuid4().hex[:12]}"
+    llm_cfg = load_llm_config()
+
+    with _tasks_lock:
+        _tasks[task_id] = {
+            'task_id': task_id, 'type': 'batch_transcript', 'author': author,
+            'status': 'running', 'progress': 0, 'step': f'准备批量提取 {len(videos)} 个视频...'
+        }
+
+    def run_batch():
+        try:
+            # 统计已有逐字稿
+            need_extract = []
+            already_has = 0
+            for d in videos:
+                t = get_transcript(d['aweme_id'])
+                if t and t.get('text_content') and len(t['text_content']) > 10:
+                    already_has += 1
+                elif d.get('video_path') and os.path.exists(d['video_path']):
+                    need_extract.append(d)
+
+            if not need_extract:
+                with _tasks_lock:
+                    _tasks[task_id]['status'] = 'completed'
+                    _tasks[task_id]['progress'] = 100
+                    _tasks[task_id]['step'] = f'全部完成! {already_has}个已有逐字稿，无需新提取'
+                return
+
+            total_need = len(need_extract)
+            with _tasks_lock:
+                _tasks[task_id]['step'] = f'共{len(videos)}个视频，{already_has}个已有逐字稿，需提取{total_need}个'
+
+            # 初始化识别器（只加载一次模型）
+            with _tasks_lock:
+                _tasks[task_id]['step'] = '加载 Whisper 模型...'
+                _tasks[task_id]['progress'] = 2
+            recognizer = SpeechRecognizer(
+                model_size=llm_cfg.get('whisper_model', 'small'),
+                device=llm_cfg.get('whisper_device', 'cpu'),
+                compute_type=llm_cfg.get('whisper_compute', 'int8'),
+                language=llm_cfg.get('whisper_language', 'zh'),
+            )
+
+            transcripts_dir = os.path.join(TRANSCRIPTS_DIR, author) if author else TRANSCRIPTS_DIR
+            os.makedirs(transcripts_dir, exist_ok=True)
+
+            success = 0
+            fail = 0
+            for idx, d in enumerate(need_extract):
+                vid = d['aweme_id']
+                video_path = d['video_path']
+                title = d.get('title', '')[:40]
+
+                progress = 5 + int(93 * idx / total_need)
+                step = f'[{idx+1}/{total_need}] {title}'
+                with _tasks_lock:
+                    _tasks[task_id]['progress'] = progress
+                    _tasks[task_id]['step'] = step
+
+                try:
+                    result = recognizer.transcribe_video(video_path, transcripts_dir)
+                    if result:
+                        save_transcript({
+                            'aweme_id': vid, 'text_content': result['text'],
+                            'srt_path': result.get('srt_path', ''),
+                            'duration': result.get('duration', 0),
+                            'word_count': result.get('word_count', 0),
+                        })
+                        success += 1
+                    else:
+                        fail += 1
+                except Exception as e:
+                    fail += 1
+                    with _tasks_lock:
+                        _tasks[task_id]['step'] = f'❌ [{idx+1}/{total_need}] {title}: {str(e)[:50]}'
+
+            with _tasks_lock:
+                _tasks[task_id]['status'] = 'completed'
+                _tasks[task_id]['progress'] = 100
+                _tasks[task_id]['step'] = f'✅ 完成! 成功{success}，失败{fail}，已有{already_has}，共{len(videos)}个'
+
+        except Exception as e:
+            with _tasks_lock:
+                _tasks[task_id]['status'] = 'failed'
+                _tasks[task_id]['step'] = f'批量提取错误: {str(e)[:100]}'
+
+    t = threading.Thread(target=run_batch, daemon=True)
+    t.start()
+    return {"task_id": task_id, "total": len(videos)}
 
 # ---- 任务状态 ----
 @app.get("/api/task/{task_id}")
@@ -826,6 +968,68 @@ def distill_status(author: str):
             if task.get('type') == 'distill' and task.get('author') == author:
                 return task
     return {"status": "idle"}
+
+
+@app.get("/api/distill/{author}/summary")
+def distill_summary(author: str):
+    """获取主播的结构化数据摘要（仪表盘用）"""
+    author_dir = os.path.join(REPORTS_DIR, author)
+    matched_path = os.path.join(author_dir, 'matched_data.json')
+
+    if not os.path.exists(matched_path):
+        raise HTTPException(404, "请先完成蒸馏")
+
+    with open(matched_path, 'r', encoding='utf-8') as f:
+        videos = json.load(f)
+
+    if not videos:
+        return {"videos": 0}
+
+    # 按点赞排序
+    sorted_by_likes = sorted(videos, key=lambda v: v.get('digg_count', 0), reverse=True)
+
+    likes = [v.get('digg_count', 0) for v in videos]
+    comments = [v.get('comment_count', 0) for v in videos]
+    shares = [v.get('share_count', 0) for v in videos]
+    has_transcript = sum(1 for v in videos if v.get('transcript'))
+
+    # 互动率 (评论+分享)/点赞，过滤极端值
+    engagement_rates = []
+    for v in videos:
+        d = v.get('digg_count', 0)
+        c = v.get('comment_count', 0) + v.get('share_count', 0)
+        if d > 0:
+            engagement_rates.append(round(c / d * 100, 1))
+
+    return {
+        "author": author,
+        "total": len(videos),
+        "likes": {
+            "total": sum(likes),
+            "avg": int(sum(likes) / max(len(likes), 1)),
+            "max": max(likes) if likes else 0,
+            "min": min(likes) if likes else 0,
+        },
+        "comments": {
+            "total": sum(comments),
+            "avg": int(sum(comments) / max(len(comments), 1)),
+        },
+        "shares": {
+            "total": sum(shares),
+        },
+        "engagement_avg": round(sum(engagement_rates) / max(len(engagement_rates), 1), 1) if engagement_rates else 0,
+        "has_transcript": has_transcript,
+        "top5": [
+            {"title": v.get('title', ''), "digg": v.get('digg_count', 0),
+             "comment": v.get('comment_count', 0), "share": v.get('share_count', 0)}
+            for v in sorted_by_likes[:5]
+        ],
+        "bottom5": [
+            {"title": v.get('title', ''), "digg": v.get('digg_count', 0),
+             "comment": v.get('comment_count', 0), "share": v.get('share_count', 0)}
+            for v in sorted_by_likes[-5:]
+        ],
+    }
 
 
 @app.get("/api/distill/{author}/reports")

@@ -26,8 +26,6 @@ class SpeechRecognizer:
         data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'data', 'models', 'whisper')
         os.makedirs(data_dir, exist_ok=True)
         os.environ['HF_HOME'] = data_dir
-        if 'HF_ENDPOINT' not in os.environ:
-            os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
         from faster_whisper import WhisperModel
         self.model = WhisperModel(

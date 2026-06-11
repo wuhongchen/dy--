@@ -59,11 +59,51 @@ tr:hover td{background:#f8fafc}
 .qa-item{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:8px}
 .qa-question{font-weight:600;font-size:14px;margin-bottom:6px}
 .qa-answer{font-size:13px;line-height:1.8;white-space:pre-wrap;color:#374151}
+.distill-left{position:sticky;top:80px;align-self:start}
+.distill-right{position:sticky;top:80px;max-height:calc(100vh - 100px);overflow-y:auto;align-self:start}
+.dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+@media(max-width:768px){.dashboard{grid-template-columns:repeat(2,1fr)}}
+.metric{background:#fff;border-radius:8px;padding:10px 8px;text-align:center;border:1px solid #f3f4f6;transition:all .2s}
+.metric:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.metric .m-num{font-size:18px;font-weight:700;line-height:1.2}
+.metric .m-label{font-size:10px;color:#6b7280;margin-top:2px}
+.metric .m-sub{font-size:10px;color:#9ca3af;margin-top:1px}
+.m-rank{font-size:13px;line-height:1.8}
+.m-rank li{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid #f3f4f6}
+.m-rank .r-idx{font-size:11px;font-weight:600;color:#9ca3af;min-width:20px;text-align:center}
+.m-rank .r-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.m-rank .r-stat{font-size:12px;font-weight:600;white-space:nowrap}
+.r-section{margin-bottom:12px}
+.r-h1{font-size:16px;font-weight:700;color:#1f2937;margin-bottom:10px;padding:8px 12px;background:linear-gradient(135deg,#fef2f2,#fff0f3);border-radius:8px;border-left:3px solid #fe2c55}
+.r-h2{font-size:14px;font-weight:600;color:#374151;margin:12px 0 8px;padding-bottom:6px;border-bottom:1px solid #f3f4f6}
+.r-h3{font-size:13px;font-weight:600;color:#6b7280;margin:10px 0 6px}
+.r-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0 12px;background:#fafafa;border-radius:8px;overflow:hidden}
+.r-table th{background:#fef2f2;color:#374151;font-weight:600;text-align:left;padding:7px 10px;font-size:11px;border-bottom:2px solid #fecdd3}
+.r-table td{padding:6px 10px;border-bottom:1px solid #f3f4f6;line-height:1.6}
+.r-table tr:last-child td{border-bottom:none}
+.r-list{padding:0;margin:4px 0 8px;list-style:none}
+.r-list li{padding:4px 0 4px 20px;position:relative;line-height:1.6;font-size:13px}
+.r-list li::before{content:'•';position:absolute;left:4px;color:#fe2c55;font-weight:700}
+.r-insight{background:linear-gradient(135deg,#fefce8,#fffbeb);border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin:8px 0;font-size:13px;line-height:1.7}
+.r-insight::before{content:'💡 ';font-size:12px}
+.r-conclusion{background:linear-gradient(135deg,#f0f9ff,#eff6ff);border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin:8px 0;font-size:13px;line-height:1.7}
+.r-conclusion::before{content:'📌 结论: ';font-weight:600;color:#2563eb}
+.r-metric-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.r-metric{flex:1;min-width:100px;background:#f9fafb;border-radius:8px;padding:10px;text-align:center}
+.r-metric .rm-num{font-size:18px;font-weight:700;color:#fe2c55;line-height:1.2}
+.r-metric .rm-label{font-size:10px;color:#9ca3af;margin-top:2px}
+.r-bold{color:#1f2937;font-weight:600}
+.r-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;margin:0 2px}
+.r-badge-good{background:#d1fae5;color:#059669}
+.r-badge-warn{background:#fee2e2;color:#dc2626}
+.r-badge-info{background:#dbeafe;color:#2563eb}
+.r-blockquote{border-left:3px solid #fecdd3;padding:6px 12px;margin:8px 0;color:#6b7280;font-size:12px;background:#fafafa;border-radius:0 6px 6px 0}
+.r-hr{border:none;border-top:1px solid #f3f4f6;margin:12px 0}
 </style>
 </head>
 <body>
 <div class="header">
-  <h1>🎵 DyD 智能下载分析系统</h1>
+  <h1>DyD 智能下载分析系统</h1>
   <p>视频下载 · 逐字稿提取 · 主播蒸馏 · AI 问答</p>
 </div>
 <div class="container">
@@ -103,19 +143,30 @@ tr:hover td{background:#f8fafc}
   <!-- ===== Tab 2: 逐字稿 ===== -->
   <div class="tab-content" id="tab-transcript">
     <div class="card">
-      <div class="card-title">📝 逐字稿提取</div>
+      <div class="card-title">📝 单个视频提取</div>
       <div class="flex mb-12">
         <select id="transcript-select" style="width:400px;height:38px">
           <option value="">选择已下载的视频...</option>
         </select>
         <button class="btn btn-outline btn-sm" onclick="refreshTranscriptList()">刷新</button>
-        <button class="btn btn-primary" onclick="startTranscript()">▶ 开始提取</button>
+        <button class="btn btn-primary" onclick="startTranscript()">▶ 提取</button>
       </div>
+      <div class="result-box" id="transcript-result" style="min-height:120px">选择视频并点击「提取」...</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🚀 批量提取 —— 按主播</div>
+      <div class="flex mb-12">
+        <select id="batch-transcript-author" style="width:300px;height:38px" onchange="onBatchAuthorChange()">
+          <option value="">选择主播...</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="refreshBatchAuthorList()">刷新</button>
+        <button class="btn btn-success" id="btn-batch-transcript" onclick="startBatchTranscript()">⚡ 批量提取</button>
+      </div>
+      <div id="batch-transcript-summary" class="summary-box" style="display:none"></div>
       <div id="transcript-progress" style="display:none">
         <div class="progress-bar"><div class="progress-fill" id="tr-fill" style="width:0%">0%</div></div>
         <div class="log-box mt-8" id="tr-log"></div>
       </div>
-      <div class="result-box" id="transcript-result" style="min-height:150px">选择视频并点击「开始提取」...</div>
     </div>
   </div>
 
@@ -123,22 +174,38 @@ tr:hover td{background:#f8fafc}
   <div class="tab-content" id="tab-distill">
     <div class="grid-2">
       <!-- 左侧：操作区 -->
-      <div>
+      <div class="distill-left">
         <div class="card">
           <div class="card-title">👤 选择主播</div>
-          <div class="flex mb-12">
-            <select id="distill-author" style="width:100%;height:38px" onchange="onAuthorChange()">
+          <div class="flex mb-8">
+            <select id="distill-author" style="flex:1;height:38px" onchange="onAuthorChange()">
               <option value="">选择主播...</option>
             </select>
-            <button class="btn btn-outline btn-sm" onclick="refreshAuthorList()">刷新</button>
+            <button class="btn btn-outline btn-sm" onclick="refreshAuthorList()">🔄</button>
           </div>
           <div id="distill-summary" class="summary-box" style="display:none"></div>
-          <div class="mb-8" style="font-size:12px;color:#6b7280">
-            <label style="margin-right:12px"><input type="radio" name="distill-output" value="both" checked> 分析报告 + 知识库</label>
-            <label style="margin-right:12px"><input type="radio" name="distill-output" value="report"> 仅分析报告</label>
+          <div class="flex mt-8" style="gap:6px">
+            <button class="btn btn-outline btn-sm" onclick="goBatchTranscript()" style="font-size:11px">📝 先批量提取逐字稿</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📋 分析维度 <span style="font-weight:400;font-size:11px;color:#9ca3af">（勾选需要的）</span></div>
+          <div class="flex mb-8" style="gap:4px;flex-wrap:wrap">
+            <button class="btn btn-sm" style="font-size:10px;padding:2px 8px" onclick="toggleAllDims(true)">全选</button>
+            <button class="btn btn-sm" style="font-size:10px;padding:2px 8px" onclick="toggleAllDims(false)">取消</button>
+            <button class="btn btn-sm" style="font-size:10px;padding:2px 8px" onclick="selectRecDims()">推荐</button>
+          </div>
+          <div id="dimension-checks" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px"></div>
+        </div>
+
+        <div class="card">
+          <div class="flex mb-8" style="font-size:12px;gap:12px">
+            <label><input type="radio" name="distill-output" value="both" checked> 报告+知识库</label>
+            <label><input type="radio" name="distill-output" value="report"> 仅报告</label>
             <label><input type="radio" name="distill-output" value="knowledge"> 仅知识库</label>
           </div>
-          <button class="btn btn-primary" onclick="startDistill()" id="btn-distill" style="width:100%;height:42px;font-size:15px">🚀 开始蒸馏</button>
+          <button class="btn btn-primary" onclick="startDistill()" id="btn-distill" style="width:100%;height:44px;font-size:15px">🚀 开始蒸馏</button>
           <div id="distill-progress" style="display:none" class="mt-8">
             <div class="progress-bar"><div class="progress-fill" id="ds-fill" style="width:0%">0%</div></div>
             <div class="log-box mt-8" id="ds-log"></div>
@@ -146,17 +213,40 @@ tr:hover td{background:#f8fafc}
         </div>
 
         <div class="card">
-          <div class="card-title">📝 提示词</div>
-          <textarea id="distill-prompt" rows="6" style="width:100%;font-family:Consolas,monospace;font-size:12px"></textarea>
-          <div class="flex mt-8">
-            <button class="btn btn-outline btn-sm" onclick="saveDistillPrompt()">💾 保存</button>
-            <button class="btn btn-outline btn-sm" onclick="resetDistillPrompt()">🔄 重置</button>
+          <div class="card-title" onclick="document.getElementById('prompt-area').style.display=document.getElementById('prompt-area').style.display==='none'?'block':'none'" style="cursor:pointer;user-select:none">
+            📝 自定义提示词 <span style="font-size:11px;color:#9ca3af;font-weight:400">（点击展开）</span>
+          </div>
+          <div id="prompt-area" style="display:none">
+            <textarea id="distill-prompt" rows="5" style="width:100%;font-family:Consolas,monospace;font-size:12px"></textarea>
+            <div class="flex mt-8">
+              <button class="btn btn-outline btn-sm" onclick="saveDistillPrompt()">💾 保存</button>
+              <button class="btn btn-outline btn-sm" onclick="resetDistillPrompt()">🔄 重置</button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 右侧：结果展示 -->
-      <div>
+      <div class="distill-right">
+        <!-- 数据仪表盘 -->
+        <div class="dashboard" id="distill-dashboard" style="display:none">
+          <div class="metric"><div class="m-num" style="color:#fe2c55" id="m-videos">-</div><div class="m-label">📹 视频总数</div></div>
+          <div class="metric"><div class="m-num" style="color:#f97316" id="m-total-likes">-</div><div class="m-label">❤️ 总点赞</div></div>
+          <div class="metric"><div class="m-num" style="color:#8b5cf6" id="m-avg-likes">-</div><div class="m-label">📊 平均点赞</div><div class="m-sub" id="m-range">最低 ~ 最高</div></div>
+          <div class="metric"><div class="m-num" style="color:#10b981" id="m-engage">-</div><div class="m-label">💬 互动率</div><div class="m-sub" id="m-transcript-stat"></div></div>
+        </div>
+        <!-- 热门/冷门视频 -->
+        <div class="grid-2" id="distill-ranks" style="display:none">
+          <div class="card" style="padding:12px">
+            <div class="card-title" style="font-size:13px;margin-bottom:8px">🏆 热门 TOP5</div>
+            <ol class="m-rank" id="top5-list"></ol>
+          </div>
+          <div class="card" style="padding:12px">
+            <div class="card-title" style="font-size:13px;margin-bottom:8px">📉 冷门 BOTTOM5</div>
+            <ol class="m-rank" id="bottom5-list"></ol>
+          </div>
+        </div>
+        <!-- 报告区 -->
         <div class="card">
           <div class="sub-tabs">
             <button class="sub-tab active" onclick="switchSubTab('reports',this)">📊 分析报告</button>
@@ -164,22 +254,19 @@ tr:hover td{background:#f8fafc}
             <button class="sub-tab" onclick="switchSubTab('qa',this)">🤖 AI 问答</button>
           </div>
 
-          <!-- 子Tab: 分析报告 -->
           <div id="subtab-reports">
             <div id="report-tabs" class="flex" style="flex-wrap:wrap;gap:4px;margin-bottom:10px"></div>
-            <div class="result-box" id="report-content" style="min-height:200px">选择主播并完成蒸馏后查看报告...</div>
+            <div class="result-box" style="white-space:normal" id="report-content" style="min-height:200px">选择主播并完成蒸馏后查看报告...</div>
           </div>
 
-          <!-- 子Tab: 知识库 -->
           <div id="subtab-knowledge" style="display:none">
             <div class="flex mb-8">
-              <span style="font-size:12px;color:#6b7280">知识库包含: 分析报告 + 元数据 + 逐字稿</span>
+              <span style="font-size:12px;color:#6b7280">知识库包含分析报告 + 元数据 + 逐字稿</span>
               <button class="btn btn-outline btn-sm" onclick="downloadKnowledge()">💾 下载</button>
             </div>
-            <div class="result-box" id="knowledge-content" style="min-height:300px">完成蒸馏后查看知识库...</div>
+            <div class="result-box" style="white-space:normal" id="knowledge-content" style="min-height:300px">完成蒸馏后查看知识库...</div>
           </div>
 
-          <!-- 子Tab: AI问答 -->
           <div id="subtab-qa" style="display:none">
             <div class="flex mb-8">
               <input type="text" id="qa-input" placeholder="基于知识库提问..." class="flex-1" onkeydown="if(event.key==='Enter')askQuestion()">
@@ -253,6 +340,15 @@ tr:hover td{background:#f8fafc}
 
 <div class="toast" id="toast"></div>
 
+<!-- 视频播放弹窗 -->
+<div id="video-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;justify-content:center;align-items:center">
+  <div style="position:relative;width:90vw;max-width:800px;background:#000;border-radius:12px;overflow:hidden">
+    <button onclick="closeVideo()" style="position:absolute;top:10px;right:10px;z-index:10;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:20px;width:36px;height:36px;border-radius:50%;cursor:pointer">✕</button>
+    <video id="video-player" controls autoplay style="width:100%;max-height:70vh;display:block"></video>
+    <div id="video-info" style="padding:12px 16px;color:#fff;font-size:13px;background:#111"></div>
+  </div>
+</div>
+
 <script>
 // ==== 全局 ====
 let currentDistillAuthor = '';
@@ -269,7 +365,7 @@ function switchTab(name,btn){
   document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if(btn)btn.classList.add('active');
-  if(name==='transcript')refreshTranscriptList();
+  if(name==='transcript'){refreshTranscriptList();refreshBatchAuthorList();}
   if(name==='distill'){refreshAuthorList();loadDistillPrompt();}
   if(name==='history'){refreshHistoryAuthorFilter();loadHistory();}
   if(name==='settings')loadSettings();
@@ -292,7 +388,6 @@ async function startDownload(){
   let url=document.getElementById('download-url').value.trim();
   const mode=document.getElementById('download-mode').value;
   if(mode!=='liked'&&mode!=='collection'&&!url){showToast('请输入链接');return}
-  // 智能提取链接
   const vidMatch=url.match(/video\/(\d+)/);
   const userMatch=url.match(/user\/([^\s?]+)/);
   const shortMatch=url.match(/(https?:\/\/v\.douyin\.com\/[^\s]+)/);
@@ -312,14 +407,14 @@ function pollTask(id,prefix){
   },2000);
 }
 
-// ==== 逐字稿 ====
+// ==== 逐字稿 - 单个 ====
 async function refreshTranscriptList(){
   const list=await api('/api/downloads');
   const trList=await api('/api/transcripts');
   const trIds=new Set(trList.map(t=>t.aweme_id));
   const sel=document.getElementById('transcript-select');
   sel.innerHTML='<option value="">选择已下载的视频...</option>';
-  list.forEach(d=>{sel.innerHTML+=`<option value="${d.aweme_id}">${trIds.has(d.aweme_id)?'✅':'⏳'} ${(d.title||'').substring(0,40)} - ${d.author||''}</option>`});
+  list.forEach(d=>{sel.innerHTML+='<option value="'+d.aweme_id+'">'+(trIds.has(d.aweme_id)?'✅':'⏳')+' '+(d.title||'').substring(0,40)+' - '+(d.author||'')+'</option>'});
 }
 async function loadTranscript(){
   const id=document.getElementById('transcript-select').value;
@@ -337,6 +432,57 @@ async function startTranscript(){
   }
 }
 
+// ==== 逐字稿 - 批量 ====
+async function refreshBatchAuthorList(){
+  const list=await api('/api/downloads');
+  const trList=await api('/api/transcripts');
+  const trMap={};trList.forEach(t=>{trMap[t.aweme_id]=t});
+  const authors={};
+  list.forEach(d=>{if(!d.author)return;if(!authors[d.author])authors[d.author]={count:0,withTr:0};authors[d.author].count++;if(trMap[d.aweme_id])authors[d.author].withTr++});
+  const sel=document.getElementById('batch-transcript-author');
+  sel.innerHTML='<option value="">选择主播...</option>';
+  Object.entries(authors).sort((a,b)=>b[1].count-a[1].count).forEach(([a,i])=>{sel.innerHTML+='<option value="'+a+'">'+a+' ('+i.count+'个视频,已有'+i.withTr+'条逐字稿)</option>'});
+}
+function onBatchAuthorChange(){
+  const author=document.getElementById('batch-transcript-author').value;
+  if(!author){document.getElementById('batch-transcript-summary').style.display='none';return}
+  api('/api/transcripts').then(trList=>{
+    const trIds=new Set(trList.map(t=>t.aweme_id));
+    api('/api/downloads?author='+encodeURIComponent(author)).then(list=>{
+      const total=list.length;
+      const hasTr=list.filter(d=>trIds.has(d.aweme_id)).length;
+      const needTr=total-hasTr;
+      const el=document.getElementById('batch-transcript-summary');
+      el.style.display='block';
+      el.innerHTML=needTr>0
+        ? '<b>'+author+'</b>: '+total+'个视频，<span style="color:#059669">'+hasTr+'个已有逐字稿</span>，<span style="color:#dc2626">'+needTr+'个待提取</span>'
+        : '<b>'+author+'</b>: '+total+'个视频，<span style="color:#059669">✅ 逐字稿齐全，无需提取</span>';
+    });
+  });
+}
+async function startBatchTranscript(){
+  const author=document.getElementById('batch-transcript-author').value;
+  if(!author){showToast('请先选择主播');return}
+  document.getElementById('transcript-progress').style.display='block';
+  document.getElementById('tr-log').textContent='启动批量提取...\n';
+  document.getElementById('tr-fill').style.width='0%';
+  document.getElementById('tr-fill').style.background='#fe2c55';
+  if(trPollTimer)clearInterval(trPollTimer);
+  const d=await api('/api/transcripts/batch?author='+encodeURIComponent(author),{method:'POST'});
+  if(!d.task_id){showToast('启动失败');return}
+  trPollTimer=setInterval(async()=>{
+    const t=await api('/api/task/'+d.task_id);
+    document.getElementById('tr-fill').style.width=t.progress+'%';
+    document.getElementById('tr-fill').textContent=t.progress+'%';
+    if(t.step){const box=document.getElementById('tr-log');const lines=box.textContent.split('\n');lines[lines.length-1]=t.step;box.textContent=lines.join('\n');box.scrollTop=99999}
+    if(t.status==='completed'||t.status==='failed'){
+      clearInterval(trPollTimer);trPollTimer=null;
+      document.getElementById('tr-fill').style.background=t.status==='completed'?'#10b981':'#dc2626';
+      showToast(t.step);refreshBatchAuthorList();refreshTranscriptList();
+    }
+  },2000);
+}
+
 // ==== 主播蒸馏 ====
 async function refreshAuthorList(){
   const list=await api('/api/downloads');
@@ -346,14 +492,18 @@ async function refreshAuthorList(){
   list.forEach(d=>{if(!d.author)return;if(!authors[d.author])authors[d.author]={count:0,withTr:0};authors[d.author].count++;if(trMap[d.aweme_id])authors[d.author].withTr++});
   const sel=document.getElementById('distill-author');
   sel.innerHTML='<option value="">选择主播...</option>';
-  Object.entries(authors).forEach(([a,i])=>{sel.innerHTML+=`<option value="${a}">👤 ${a} (${i.count}个视频, ${i.withTr}条逐字稿)</option>`});
+  Object.entries(authors).forEach(([a,i])=>{sel.innerHTML+='<option value="'+a+'">👤 '+a+' ('+i.count+'个视频, '+i.withTr+'条逐字稿)</option>'});
   if(currentDistillAuthor)sel.value=currentDistillAuthor;
 }
 function onAuthorChange(){
   const author=document.getElementById('distill-author').value;
   currentDistillAuthor=author;
-  if(!author){document.getElementById('distill-summary').style.display='none';return}
-  // 查摘要
+  if(!author){
+    document.getElementById('distill-summary').style.display='none';
+    document.getElementById('distill-dashboard').style.display='none';
+    document.getElementById('distill-ranks').style.display='none';
+    return
+  }
   api('/api/downloads?author='+encodeURIComponent(author)).then(list=>{
     api('/api/transcripts').then(trList=>{
       const trIds=new Set(trList.map(t=>t.aweme_id));
@@ -362,10 +512,15 @@ function onAuthorChange(){
       const totalLikes=list.reduce((s,d)=>s+(d.digg_count||0),0);
       const el=document.getElementById('distill-summary');
       el.style.display='block';
-      el.innerHTML=`📊 <b>${author}</b>: ${total}个视频 | ${withTr}/${total}条逐字稿 | 总点赞 ${totalLikes.toLocaleString()}`+(withTr<total?` | <span style="color:#dc2626">⚠️ ${total-withTr}个缺逐字稿，蒸馏时自动提取</span>`:` | <span style="color:#059669">✅ 逐字稿齐全</span>`);
+      const avg=total>0?Math.round(totalLikes/total):0;
+      el.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">'+
+        '<div><div style="font-size:20px;font-weight:700;color:#fe2c55">'+total+'</div><div style="font-size:10px;color:#9ca3af">📹 视频</div></div>'+
+        '<div><div style="font-size:20px;font-weight:700;color:#f97316">'+(totalLikes/1000).toFixed(1)+'K</div><div style="font-size:10px;color:#9ca3af">❤️ 总赞</div></div>'+
+        '<div><div style="font-size:20px;font-weight:700;color:'+(withTr>=total?'#059669':'#dc2626')+'">'+withTr+'/'+total+'</div><div style="font-size:10px;color:#9ca3af">📝 逐字稿</div></div>'+
+        '</div>';
     });
   });
-  // 检查是否已完成过分身
+  loadDashboard(author);
   api('/api/distill/'+author+'/reports').then(d=>{
     if(d.reports&&d.reports.length>0){
       document.getElementById('btn-distill').textContent='🔄 重新蒸馏';
@@ -375,15 +530,81 @@ function onAuthorChange(){
     }
   });
 }
+function goBatchTranscript(){
+  const author=document.getElementById('distill-author').value;
+  if(!author){showToast('请先选择主播');return}
+  switchTab('transcript',document.querySelectorAll('.tab')[1]);
+  document.getElementById('batch-transcript-author').value=author;
+  onBatchAuthorChange();
+}
+async function loadDashboard(author){
+  try{
+    const d=await api('/api/distill/'+author+'/summary');
+    document.getElementById('distill-dashboard').style.display='grid';
+    document.getElementById('m-videos').textContent=d.total||'-';
+    document.getElementById('m-total-likes').textContent=((d.likes?.total||0)/1000).toFixed(1)+'K';
+    document.getElementById('m-avg-likes').textContent=((d.likes?.avg||0)/1000).toFixed(1)+'K';
+    document.getElementById('m-range').textContent='最低 '+(d.likes?.min||0)+' · 最高 '+(d.likes?.max||0);
+    document.getElementById('m-engage').textContent=(d.engagement_avg||0)+'%';
+    document.getElementById('m-transcript-stat').textContent=(d.has_transcript||0)+'/'+(d.total||0)+' 有逐字稿';
+    // 排行榜
+    document.getElementById('distill-ranks').style.display='grid';
+    const top5=document.getElementById('top5-list');
+    top5.innerHTML=(d.top5||[]).map((v,i)=>'<li><span class="r-idx">'+(i+1)+'</span><span class="r-title" title="'+v.title+'">'+v.title+'</span><span class="r-stat" style="color:#fe2c55">'+v.digg+' 👍</span></li>').join('');
+    const b5=document.getElementById('bottom5-list');
+    b5.innerHTML=(d.bottom5||[]).map((v,i)=>'<li><span class="r-idx">'+(i+1)+'</span><span class="r-title" title="'+v.title+'">'+v.title+'</span><span class="r-stat" style="color:#9ca3af">'+v.digg+' 👍</span></li>').join('');
+  }catch(e){
+    document.getElementById('distill-dashboard').style.display='none';
+    document.getElementById('distill-ranks').style.display='none';
+  }
+}
+// ==== 维度选择 ====
+const DIMENSIONS=[
+  {id:1,label:'整体表现概览',rec:true},
+  {id:2,label:'最佳最差视频分析',rec:true},
+  {id:3,label:'内容类型分布',rec:true},
+  {id:4,label:'标题与封面策略',rec:false},
+  {id:5,label:'发布节奏分析',rec:false},
+  {id:6,label:'账号定位分析',rec:true},
+  {id:7,label:'运营方法论',rec:false},
+  {id:8,label:'爆款拆解',rec:true},
+  {id:9,label:'可复制清单',rec:false},
+  {id:10,label:'知识库',rec:true},
+];
+(function buildDimChecks(){
+  const el=document.getElementById('dimension-checks');
+  el.innerHTML=DIMENSIONS.map(d=>'<label><input type="checkbox" class="dim-cb" value="'+d.id+'" '+(d.rec?'checked':'')+' onchange="onDimChange()"> '+d.label+'</label>').join('');
+  onDimChange();
+})();
+function onDimChange(){
+  const cbs=document.querySelectorAll('.dim-cb:checked');
+  document.getElementById('btn-distill').textContent='🚀 开始蒸馏（'+cbs.length+'个维度）';
+}
+function toggleAllDims(on){
+  document.querySelectorAll('.dim-cb').forEach(cb=>cb.checked=on);
+  onDimChange();
+}
+function selectRecDims(){
+  const recSet=new Set(DIMENSIONS.filter(d=>d.rec).map(d=>String(d.id)));
+  document.querySelectorAll('.dim-cb').forEach(cb=>cb.checked=recSet.has(cb.value));
+  onDimChange();
+}
+function getSelectedDims(){
+  return Array.from(document.querySelectorAll('.dim-cb:checked')).map(cb=>cb.value).join(',');
+}
+
 async function startDistill(){
   const author=document.getElementById('distill-author').value;
   if(!author){showToast('请先选择主播');return}
   const prompt=document.getElementById('distill-prompt').value;
   const output=document.querySelector('input[name="distill-output"]:checked').value;
+  const dims=getSelectedDims();
+  if(!dims){showToast('请至少选择一个分析维度');return}
   document.getElementById('distill-progress').style.display='block';
-  document.getElementById('ds-log').textContent='启动蒸馏...\n';
+  document.getElementById('ds-log').textContent='启动蒸馏（'+document.querySelectorAll('.dim-cb:checked').length+'个维度）...\n';
   document.getElementById('ds-fill').style.width='0%';
-  const d=await api('/api/distill?author='+encodeURIComponent(author)+'&prompt='+encodeURIComponent(prompt)+'&output='+output,{method:'POST'});
+  document.getElementById('ds-fill').style.background='#fe2c55';
+  const d=await api('/api/distill?author='+encodeURIComponent(author)+'&prompt='+encodeURIComponent(prompt)+'&dimensions='+dims+'&output='+output,{method:'POST'});
   if(d.task_id){
     if(dsPollTimer)clearInterval(dsPollTimer);
     dsPollTimer=setInterval(async()=>{
@@ -391,7 +612,7 @@ async function startDistill(){
       document.getElementById('ds-fill').style.width=(t.progress||0)+'%';
       document.getElementById('ds-fill').textContent=(t.progress||0)+'%';
       if(t.step){document.getElementById('ds-log').textContent+=t.step+'\n';document.getElementById('ds-log').scrollTop=99999}
-      if(t.status==='completed'||t.status==='failed'){clearInterval(dsPollTimer);dsPollTimer=null;document.getElementById('ds-fill').style.background=t.status==='completed'?'#10b981':'#dc2626';showToast(t.step);if(t.status==='completed'){loadReports();loadKnowledge()}}
+      if(t.status==='completed'||t.status==='failed'){clearInterval(dsPollTimer);dsPollTimer=null;document.getElementById('ds-fill').style.background=t.status==='completed'?'#10b981':'#dc2626';showToast(t.step);if(t.status==='completed'){loadDashboard(currentDistillAuthor);loadReports();loadKnowledge()}}
     },2000);
   }
 }
@@ -408,13 +629,145 @@ async function loadReports(){
   });
   loadReportContent(d.reports[0]);
 }
+function renderMD(text){
+  if(!text)return'';
+  // Escape HTML
+  let t=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Split into blocks by double newline
+  let blocks=t.split(/\n\n+/);
+  let out='';
+  let inTable=false, inList=false, listType='';
+
+  for(let i=0;i<blocks.length;i++){
+    let b=blocks[i].trim();
+    if(!b){continue;}
+
+    // Detect table: lines starting/containing |...|...|
+    let lines=b.split('\n');
+    let isTable=lines.length>=2 && lines.every(l=>/^\|.+\|$/.test(l.trim()));
+    if(isTable){
+      out+=renderTable(lines);
+      continue;
+    }
+
+    // Detect h1 (starts with # )
+    if(/^# [^#]/.test(b)){
+      let title=b.replace(/^# /,'');
+      out+='<div class="r-h1">'+title+'</div>';
+      continue;
+    }
+
+    // Detect h2
+    if(/^## [^#]/.test(b)){
+      let title=b.replace(/^## /,'');
+      out+='<div class="r-h2">'+renderInline(title)+'</div>';
+      continue;
+    }
+
+    // Detect h3 / h4
+    if(/^### [^#]/.test(b)){
+      let title=b.replace(/^### /,'');
+      out+='<div class="r-h3">'+renderInline(title)+'</div>';
+      continue;
+    }
+    if(/^#### [^#]/.test(b)){
+      let title=b.replace(/^#### /,'');
+      out+='<div style="font-size:12px;font-weight:600;color:#9ca3af;margin:8px 0 4px">'+renderInline(title)+'</div>';
+      continue;
+    }
+
+    // Detect hr
+    if(/^---+$/.test(b)){
+      out+='<div class="r-hr"></div>';
+      continue;
+    }
+
+    // Detect blockquote (lines starting with >)
+    if(lines.every(l=>/^>/.test(l.trim()))){
+      let q=b.replace(/^> ?/gm,'');
+      out+='<div class="r-blockquote">'+renderInline(q)+'</div>';
+      continue;
+    }
+
+    // Detect numbered list (lines starting with 1. 2. etc)
+    if(/^\d+\.\s/.test(lines[0].trim())){
+      let items=b.split(/\n(?=\d+\.\s)/);
+      let lis=items.map(it=>'<li>'+renderInline(it.replace(/^\d+\.\s/,'').trim())+'</li>').join('');
+      out+='<ul class="r-list">'+lis+'</ul>';
+      continue;
+    }
+
+    // Detect bullet list
+    if(/^[-*]\s/.test(lines[0].trim())){
+      let items=b.split(/\n(?=[-*]\s)/);
+      let lis=items.map(it=>'<li>'+renderInline(it.replace(/^[-*]\s/,'').trim())+'</li>').join('');
+      out+='<ul class="r-list">'+lis+'</ul>';
+      continue;
+    }
+
+    // Detect conclusion/insight patterns
+    let firstLine=lines[0].trim();
+    if(/^(结论|总结)[：:]/.test(firstLine) || /核心差异|一句话总结/.test(firstLine)){
+      out+='<div class="r-conclusion">'+renderInline(b)+'</div>';
+      continue;
+    }
+    if(/^💡|^(关键|核心).{0,3}[：:]/.test(firstLine)){
+      out+='<div class="r-insight">'+renderInline(b)+'</div>';
+      continue;
+    }
+
+    // Detect metric-like lines: "**数字** 描述" pattern repeated
+    let metricCount=(b.match(/\*\*[\d,.Kk万Ww]+\*\*/g)||[]).length;
+    if(metricCount>=3 && lines.length<=4){
+      let metrics=b.split('\n').filter(l=>/\*\*/.test(l));
+      if(metrics.length>=2){
+        out+='<div class="r-metric-row">';
+        metrics.forEach(m=>{
+          m=m.replace(/\*\*([^*]+)\*\*/g,'<span class="rm-num">$1</span>');
+          out+='<div class="r-metric">'+renderInline(m)+'</div>';
+        });
+        out+='</div>';
+        continue;
+      }
+    }
+
+    // Default paragraph
+    let p=b.replace(/\n/g,'<br>');
+    out+='<div style="font-size:13px;line-height:1.8;margin-bottom:6px">'+renderInline(p)+'</div>';
+  }
+  return out;
+}
+
+function renderInline(s){
+  if(!s)return'';
+  s=s.replace(/\*\*(.+?)\*\*/g,'<strong class="r-bold">$1</strong>');
+  s=s.replace(/`([^`]+)`/g,'<code style="background:#fef3f5;color:#fe2c55;padding:1px 5px;border-radius:3px;font-size:12px">$1</code>');
+  // Color badges
+  s=s.replace(/(爆款|最佳|成功|优秀|增长|正面|高)/g,'<span class="r-badge r-badge-good">$1</span>');
+  s=s.replace(/(最差|失败|下降|负面|低|陷阱)/g,'<span class="r-badge r-badge-warn">$1</span>');
+  return s;
+}
+
+function renderTable(lines){
+  let h='<table class="r-table">';
+  lines.forEach((line,i)=>{
+    let cells=line.split('|').filter(c=>c.trim());
+    let isSep=cells.every(c=>/^[-: ]+$/.test(c));
+    if(isSep)return;
+    let tag=i===0?'th':'td';
+    h+='<tr>'+cells.map(c=>'<'+tag+'>'+renderInline(c.trim())+'</'+tag+'>').join('')+'</tr>';
+    if(i===0)h=h.replace(/<\/tr>/,'</tr><tr style="display:none">'); // skip header sep line
+  });
+  h+='</table>';
+  return h;
+}
 async function loadReportContent(name){
   const d=await api('/api/distill/'+currentDistillAuthor+'/report/'+encodeURIComponent(name));
-  document.getElementById('report-content').textContent=d.content||'无内容';
+  document.getElementById('report-content').innerHTML=renderMD(d.content)||'无内容';
 }
 async function loadKnowledge(){
   if(!currentDistillAuthor)return;
-  try{const d=await api('/api/distill/'+currentDistillAuthor+'/knowledge');document.getElementById('knowledge-content').textContent=d.content||'无内容'}
+  try{const d=await api('/api/distill/'+currentDistillAuthor+'/knowledge');document.getElementById('knowledge-content').innerHTML=renderMD(d.content)||'无内容'}
   catch{document.getElementById('knowledge-content').textContent='知识库不存在，请先完成分身'}
 }
 function downloadKnowledge(){
@@ -426,7 +779,7 @@ async function askQuestion(){
   const input=document.getElementById('qa-input');
   const q=input.value.trim();if(!q)return;input.value='';
   const el=document.getElementById('qa-history');
-  el.innerHTML+=`<div class="qa-item"><div class="qa-question">Q: ${q}</div><div class="qa-answer" id="qa-ans-${Date.now()}">思考中...</div></div>`;
+  el.innerHTML+='<div class="qa-item"><div class="qa-question">Q: '+q+'</div><div class="qa-answer" id="qa-ans-'+Date.now()+'">思考中...</div></div>';
   el.scrollTop=99999;
   try{const d=await api('/api/distill/'+currentDistillAuthor+'/qa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
     el.lastElementChild.querySelector('.qa-answer').textContent=d.answer||'无回答';
@@ -440,19 +793,16 @@ async function refreshHistoryAuthorFilter(){
   const authors=await api('/api/authors');
   const sel=document.getElementById('history-author');
   sel.innerHTML='<option value="">全部作者</option>';
-  authors.forEach(a=>{sel.innerHTML+=`<option value="${a.name}">${a.name} (${a.count})</option>`});
+  authors.forEach(a=>{sel.innerHTML+='<option value="'+a.name+'">'+a.name+' ('+a.count+')</option>'});
 }
 async function loadHistory(){
   const kw=document.getElementById('history-search').value;
   const author=document.getElementById('history-author').value;
   const trFilter=document.getElementById('history-transcript').value;
   let list=await api('/api/downloads?keyword='+encodeURIComponent(kw));
-  // 按作者筛选
   if(author)list=list.filter(d=>d.author===author);
-  // 获取逐字稿状态
   const trList=await api('/api/transcripts');
   const trIds=new Set(trList.map(t=>t.aweme_id));
-  // 按逐字稿状态筛选
   if(trFilter==='yes')list=list.filter(d=>trIds.has(d.aweme_id));
   if(trFilter==='no')list=list.filter(d=>!trIds.has(d.aweme_id));
   const tbody=document.getElementById('history-tbody');
@@ -460,18 +810,41 @@ async function loadHistory(){
   tbody.innerHTML=list.map((d,i)=>{
     const ts=d.create_time||0;
     const date=ts?new Date(ts*1000).toLocaleDateString('zh-CN'):'-';
-    return `<tr>
-    <td>${i+1}</td><td>${(d.title||'').substring(0,50)}</td><td>${d.author||''}</td>
-    <td class="num">${d.digg_count||0}</td><td class="num">${d.comment_count||0}</td><td class="num">${d.share_count||0}</td>
-    <td>${date}</td>
-    <td>${trIds.has(d.aweme_id)?'<span class="tag tag-green">✅</span>':'<span class="tag tag-red">❌</span>'}</td>
-    <td><button class="btn btn-outline btn-sm" onclick="goDistill('${d.author}')">👤</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteHistory('${d.aweme_id}')">🗑</button></td>
-  </tr>`}).join('');
+    return '<tr>'+
+    '<td>'+(i+1)+'</td><td>'+(d.title||'').substring(0,50)+'</td><td>'+(d.author||'')+'</td>'+
+    '<td class="num">'+(d.digg_count||0)+'</td><td class="num">'+(d.comment_count||0)+'</td><td class="num">'+(d.share_count||0)+'</td>'+
+    '<td>'+date+'</td>'+
+    '<td>'+(trIds.has(d.aweme_id)?'<span class="tag tag-green">✅</span>':'<span class="tag tag-red">❌</span>')+'</td>'+
+    '<td style="white-space:nowrap">'+
+      '<button class="btn btn-outline btn-sm" onclick="viewVideo(\''+d.aweme_id+'\',\''+(d.title||'').replace(/'/g,"\\'")+'\')" title="在线播放">▶</button> '+
+      '<button class="btn btn-outline btn-sm" onclick="openFolder(\''+d.aweme_id+'\')" title="在 Finder 中显示">📂</button> '+
+      '<button class="btn btn-outline btn-sm" onclick="goDistill(\''+d.author+'\')" title="蒸馏分析">👤</button> '+
+      '<button class="btn btn-danger btn-sm" onclick="deleteHistory(\''+d.aweme_id+'\')" title="删除">🗑</button></td>'+
+    '</tr>'
+  }).join('');
 }
 function goDistill(author){switchTab('distill',document.querySelectorAll('.tab')[2]);document.getElementById('distill-author').value=author;onAuthorChange()}
 function clearHistoryFilter(){document.getElementById('history-search').value='';document.getElementById('history-author').value='';document.getElementById('history-transcript').value='';loadHistory()}
 async function deleteHistory(id){if(!confirm('确定删除?'))return;await api('/api/downloads/'+id,{method:'DELETE'});loadHistory();showToast('已删除')}
+async function viewVideo(id,title){
+  const modal=document.getElementById('video-modal');
+  const player=document.getElementById('video-player');
+  const info=document.getElementById('video-info');
+  modal.style.display='flex';
+  info.textContent=title||'';
+  player.src='/api/video/'+id;
+  player.load();
+  player.play();
+}
+function closeVideo(){
+  const player=document.getElementById('video-player');
+  player.pause();player.src='';
+  document.getElementById('video-modal').style.display='none';
+}
+async function openFolder(id){
+  try{await api('/api/downloads/'+id+'/open-folder',{method:'POST'});showToast('已在 Finder 中打开')}
+  catch(e){showToast('打开失败')}
+}
 
 // ==== 设置 ====
 async function loadSettings(){
@@ -498,6 +871,9 @@ async function saveAllSettings(){
 async function loadDistillPrompt(){const d=await api('/api/prompts/analyze_anchor');document.getElementById('distill-prompt').value=d.content||''}
 async function saveDistillPrompt(){await api('/api/prompts/analyze_anchor',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'analyze_anchor',content:document.getElementById('distill-prompt').value})});showToast('提示词已保存')}
 async function resetDistillPrompt(){const d=await api('/api/prompts/analyze_anchor/reset',{method:'POST'});document.getElementById('distill-prompt').value=d.content||'';showToast('已重置')}
+
+// ==== 快捷键 ====
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeVideo()});
 
 // ==== 初始化 ====
 checkChrome();
